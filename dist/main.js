@@ -21,6 +21,9 @@ async function bootstrap() {
         .setTitle('Belanjaaa Marketplace API')
         .setDescription('Dokumentasi REST API marketplace e-commerce')
         .setVersion('1.0')
+        .addTag('Root', 'Informasi root API')
+        .addTag('Products', 'Katalog dan pencarian produk')
+        .addTag('Categories', 'Kategori produk marketplace')
         .addTag('Health', 'Pemeriksaan status sistem')
         .build();
     const document = SwaggerModule.createDocument(app, config);

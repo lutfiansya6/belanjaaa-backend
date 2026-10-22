@@ -22,9 +22,11 @@ async function bootstrap() {
         .setDescription('Dokumentasi REST API marketplace e-commerce')
         .setVersion('1.0')
         .addTag('Root', 'Informasi root API')
+        .addTag('Auth', 'Otentikasi dan sesi pengguna')
         .addTag('Products', 'Katalog dan pencarian produk')
         .addTag('Categories', 'Kategori produk marketplace')
         .addTag('Health', 'Pemeriksaan status sistem')
+        .addBearerAuth()
         .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document);

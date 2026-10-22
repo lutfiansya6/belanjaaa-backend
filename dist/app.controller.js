@@ -15,10 +15,21 @@ let AppController = class AppController {
     constructor(appService) {
         this.appService = appService;
     }
+    getRoot() {
+        return this.appService.getRoot();
+    }
     getHealth() {
         return this.appService.getHealth();
     }
 };
+__decorate([
+    Get(),
+    ApiOperation({ summary: 'Informasi dasar API' }),
+    ApiResponse({ status: 200, description: 'Informasi API v1' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], AppController.prototype, "getRoot", null);
 __decorate([
     Get('health'),
     ApiOperation({ summary: 'Cek status kesehatan API' }),

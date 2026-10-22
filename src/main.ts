@@ -29,7 +29,7 @@ async function bootstrap() {
 
   // Swagger documentation at /docs
   const config = new DocumentBuilder()
-    .setTitle('Shopee Clone Marketplace API')
+    .setTitle('Belanjaaa Marketplace API')
     .setDescription('Dokumentasi REST API marketplace e-commerce')
     .setVersion('1.0')
     .addTag('Health', 'Pemeriksaan status sistem')
@@ -44,4 +44,4 @@ async function bootstrap() {
   console.log(`Swagger documentation available at: http://localhost:${port}/docs`);
 }
 
-bootstrap();
+void bootstrap();

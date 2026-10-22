@@ -24,6 +24,14 @@ describe('AppController', () => {
     appController = app.get<AppController>(AppController);
   });
 
+  describe('root', () => {
+    it('should return API information', () => {
+      const result = appController.getRoot();
+      expect(result.status).toBe('active');
+      expect(result.docs).toBe('/docs');
+    });
+  });
+
   describe('health', () => {
     it('should return health status', async () => {
       const result = await appController.getHealth();

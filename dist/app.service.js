@@ -14,6 +14,15 @@ let AppService = class AppService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    getRoot() {
+        return {
+            name: 'Belanjaaa Marketplace API',
+            version: '1.0.0',
+            status: 'active',
+            docs: '/docs',
+            health: '/api/v1/health',
+        };
+    }
     async getHealth() {
         const userCount = await this.prisma.user.count();
         const productCount = await this.prisma.product.count();

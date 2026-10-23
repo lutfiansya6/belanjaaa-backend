@@ -36,6 +36,9 @@ async function bootstrap() {
     .addTag('Auth', 'Otentikasi dan sesi pengguna')
     .addTag('Products', 'Katalog dan pencarian produk')
     .addTag('Categories', 'Kategori produk marketplace')
+    .addTag('Cart', 'Pengelolaan keranjang belanja pengguna')
+    .addTag('Orders', 'Pemesanan dan checkout produk')
+    .addTag('Addresses', 'Alamat pengiriman pengguna')
     .addTag('Health', 'Pemeriksaan status sistem')
     .addBearerAuth()
     .build();

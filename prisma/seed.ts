@@ -1,3 +1,4 @@
+// Prisma seed script
 import { PrismaClient, Role } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { fakerID_ID as faker } from '@faker-js/faker';
@@ -30,6 +31,11 @@ const SAMPLE_IMAGES = [
 
 async function main() {
   console.log('Clearing existing data...');
+  await prisma.orderItem.deleteMany({});
+  await prisma.order.deleteMany({});
+  await prisma.cartItem.deleteMany({});
+  await prisma.cart.deleteMany({});
+  await prisma.address.deleteMany({});
   await prisma.product.deleteMany({});
   await prisma.category.deleteMany({});
   await prisma.shop.deleteMany({});

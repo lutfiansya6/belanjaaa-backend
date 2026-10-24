@@ -37,6 +37,9 @@ let OrdersController = class OrdersController {
     updateStatus(user, id, dto) {
         return this.ordersService.updateStatus(user.sub, id, dto);
     }
+    pay(user, id) {
+        return this.ordersService.pay(user.sub, id);
+    }
 };
 __decorate([
     Post(),
@@ -156,6 +159,38 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, UpdateOrderStatusDto]),
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "updateStatus", null);
+__decorate([
+    Post(':id/pay'),
+    ApiOperation({
+        summary: 'Mendapatkan Snap token dan redirect URL untuk pembayaran Midtrans (hanya pemilik pesanan & status PENDING)',
+    }),
+    ApiParam({
+        name: 'id',
+        description: 'ID unik pesanan (UUID)',
+        example: '123e4567-e89b-12d3-a456-426614174000',
+    }),
+    ApiResponse({
+        status: 201,
+        description: 'Snap token dan redirect URL berhasil didapatkan untuk pembayaran Midtrans.',
+    }),
+    ApiResponse({
+        status: 400,
+        description: 'Pesanan bukan berstatus PENDING.',
+    }),
+    ApiResponse({
+        status: 403,
+        description: 'Hanya pemilik pesanan yang dapat melakukan pembayaran.',
+    }),
+    ApiResponse({
+        status: 404,
+        description: 'Pesanan tidak ditemukan.',
+    }),
+    __param(0, CurrentUser()),
+    __param(1, Param('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], OrdersController.prototype, "pay", null);
 OrdersController = __decorate([
     ApiTags('Orders'),
     Controller('orders'),

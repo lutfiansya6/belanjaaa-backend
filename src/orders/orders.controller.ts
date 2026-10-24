@@ -145,4 +145,36 @@ export class OrdersController {
   ) {
     return this.ordersService.updateStatus(user.sub, id, dto);
   }
+
+  @Post(':id/pay')
+  @ApiOperation({
+    summary:
+      'Mendapatkan Snap token dan redirect URL untuk pembayaran Midtrans (hanya pemilik pesanan & status PENDING)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID unik pesanan (UUID)',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 201,
+    description:
+      'Snap token dan redirect URL berhasil didapatkan untuk pembayaran Midtrans.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Pesanan bukan berstatus PENDING.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Hanya pemilik pesanan yang dapat melakukan pembayaran.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Pesanan tidak ditemukan.',
+  })
+  pay(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.ordersService.pay(user.sub, id);
+  }
 }
+

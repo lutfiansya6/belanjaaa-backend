@@ -1,9 +1,11 @@
 import { PrismaService } from '../prisma/prisma.service.js';
+import { MidtransService } from '../payments/midtrans.service.js';
 import { CreateOrderDto } from './dto/create-order.dto.js';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto.js';
 export declare class OrdersService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly midtransService;
+    constructor(prisma: PrismaService, midtransService: MidtransService);
     createFromCart(userId: string, dto: CreateOrderDto): Promise<{
         address: {
             id: string;
@@ -206,5 +208,12 @@ export declare class OrdersService {
         addressId: string | null;
         status: import(".prisma/client").$Enums.OrderStatus;
         totalAmount: number;
+    }>;
+    pay(userId: string, orderId: string): Promise<{
+        token: string;
+        redirectUrl: string;
+        redirect_url: string;
+        snapToken: string;
+        midtransOrderId: string;
     }>;
 }

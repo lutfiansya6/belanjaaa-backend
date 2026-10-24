@@ -5,6 +5,15 @@ import { AppModule } from './app.module.js';
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     app.setGlobalPrefix('api/v1');
+    app.use((req, _res, next) => {
+        if (req.url.startsWith('/payments/webhook')) {
+            req.url = '/api/v1' + req.url;
+        }
+        else if (req.url.match(/^\/orders\/[^/]+\/pay/)) {
+            req.url = '/api/v1' + req.url;
+        }
+        next();
+    });
     app.enableCors({
         origin: 'http://localhost:3000',
         credentials: true,
@@ -28,6 +37,7 @@ async function bootstrap() {
         .addTag('Cart', 'Pengelolaan keranjang belanja pengguna')
         .addTag('Orders', 'Pemesanan dan checkout produk')
         .addTag('Addresses', 'Alamat pengiriman pengguna')
+        .addTag('Payments', 'Integrasi pembayaran Midtrans Snap & Webhook')
         .addTag('Health', 'Pemeriksaan status sistem')
         .addBearerAuth()
         .build();

@@ -1,16 +1,21 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { OrderStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { MidtransService } from '../payments/midtrans.service.js';
 import { CreateOrderDto } from './dto/create-order.dto.js';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto.js';
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly midtransService: MidtransService,
+  ) {}
 
   async createFromCart(userId: string, dto: CreateOrderDto) {
     // 1. Validasi alamat jika dikirimkan oleh pengguna
@@ -280,4 +285,90 @@ export class OrdersService {
       },
     });
   }
+
+  async pay(userId: string, orderId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: true,
+        user: {
+          select: { id: true, name: true, email: true, phone: true },
+        },
+        address: true,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Pesanan tidak ditemukan');
+    }
+
+    if (order.userId !== userId) {
+      throw new ForbiddenException('Anda bukan pemilik pesanan ini');
+    }
+
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException(
+        `Hanya pesanan dengan status PENDING yang dapat dibayar (status saat ini: ${order.status})`,
+      );
+    }
+
+    // Periksa apakah sudah ada payment dengan status PENDING yang memiliki snapToken aktif
+    const existingPayment = await this.prisma.payment.findFirst({
+      where: { orderId: order.id, status: 'PENDING' },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (existingPayment?.snapToken && existingPayment?.snapRedirectUrl) {
+      return {
+        token: existingPayment.snapToken,
+        redirectUrl: existingPayment.snapRedirectUrl,
+        redirect_url: existingPayment.snapRedirectUrl,
+        snapToken: existingPayment.snapToken,
+        midtransOrderId: existingPayment.midtransOrderId,
+      };
+    }
+
+    const paymentCount = await this.prisma.payment.count({
+      where: { orderId: order.id },
+    });
+    const midtransOrderId =
+      paymentCount === 0 ? order.id : `${order.id}-${Date.now()}`;
+
+    const snapResult = await this.midtransService.createSnapTransaction({
+      orderId: midtransOrderId,
+      grossAmount: order.totalAmount,
+      customerDetails: {
+        first_name: order.user?.name ?? 'Pembeli Belanjaaa',
+        email: order.user?.email,
+        phone: order.address?.phone ?? order.user?.phone ?? '08123456789',
+      },
+      itemDetails: order.items.map((item) => ({
+        id: item.productId ?? item.id,
+        price: item.price,
+        quantity: item.quantity,
+        name: item.productName.slice(0, 50),
+      })),
+    });
+
+    await this.prisma.payment.create({
+      data: {
+        orderId: order.id,
+        midtransOrderId,
+        status: 'PENDING',
+        grossAmount: order.totalAmount,
+        snapToken: snapResult.token,
+        snapRedirectUrl: snapResult.redirectUrl,
+        rawPayload: JSON.stringify(snapResult),
+      },
+    });
+
+    return {
+      token: snapResult.token,
+      redirectUrl: snapResult.redirectUrl,
+      redirect_url: snapResult.redirectUrl,
+      snapToken: snapResult.token,
+      midtransOrderId,
+    };
+  }
 }
+

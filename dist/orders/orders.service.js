@@ -7,13 +7,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { BadRequestException, Injectable, NotFoundException, } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, } from '@nestjs/common';
 import { OrderStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { MidtransService } from '../payments/midtrans.service.js';
 let OrdersService = class OrdersService {
     prisma;
-    constructor(prisma) {
+    midtransService;
+    constructor(prisma, midtransService) {
         this.prisma = prisma;
+        this.midtransService = midtransService;
     }
     async createFromCart(userId, dto) {
         let addressId = null;
@@ -230,10 +233,82 @@ let OrdersService = class OrdersService {
             },
         });
     }
+    async pay(userId, orderId) {
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            include: {
+                items: true,
+                user: {
+                    select: { id: true, name: true, email: true, phone: true },
+                },
+                address: true,
+            },
+        });
+        if (!order) {
+            throw new NotFoundException('Pesanan tidak ditemukan');
+        }
+        if (order.userId !== userId) {
+            throw new ForbiddenException('Anda bukan pemilik pesanan ini');
+        }
+        if (order.status !== OrderStatus.PENDING) {
+            throw new BadRequestException(`Hanya pesanan dengan status PENDING yang dapat dibayar (status saat ini: ${order.status})`);
+        }
+        const existingPayment = await this.prisma.payment.findFirst({
+            where: { orderId: order.id, status: 'PENDING' },
+            orderBy: { createdAt: 'desc' },
+        });
+        if (existingPayment?.snapToken && existingPayment?.snapRedirectUrl) {
+            return {
+                token: existingPayment.snapToken,
+                redirectUrl: existingPayment.snapRedirectUrl,
+                redirect_url: existingPayment.snapRedirectUrl,
+                snapToken: existingPayment.snapToken,
+                midtransOrderId: existingPayment.midtransOrderId,
+            };
+        }
+        const paymentCount = await this.prisma.payment.count({
+            where: { orderId: order.id },
+        });
+        const midtransOrderId = paymentCount === 0 ? order.id : `${order.id}-${Date.now()}`;
+        const snapResult = await this.midtransService.createSnapTransaction({
+            orderId: midtransOrderId,
+            grossAmount: order.totalAmount,
+            customerDetails: {
+                first_name: order.user?.name ?? 'Pembeli Belanjaaa',
+                email: order.user?.email,
+                phone: order.address?.phone ?? order.user?.phone ?? '08123456789',
+            },
+            itemDetails: order.items.map((item) => ({
+                id: item.productId ?? item.id,
+                price: item.price,
+                quantity: item.quantity,
+                name: item.productName.slice(0, 50),
+            })),
+        });
+        await this.prisma.payment.create({
+            data: {
+                orderId: order.id,
+                midtransOrderId,
+                status: 'PENDING',
+                grossAmount: order.totalAmount,
+                snapToken: snapResult.token,
+                snapRedirectUrl: snapResult.redirectUrl,
+                rawPayload: JSON.stringify(snapResult),
+            },
+        });
+        return {
+            token: snapResult.token,
+            redirectUrl: snapResult.redirectUrl,
+            redirect_url: snapResult.redirectUrl,
+            snapToken: snapResult.token,
+            midtransOrderId,
+        };
+    }
 };
 OrdersService = __decorate([
     Injectable(),
-    __metadata("design:paramtypes", [PrismaService])
+    __metadata("design:paramtypes", [PrismaService,
+        MidtransService])
 ], OrdersService);
 export { OrdersService };
 //# sourceMappingURL=orders.service.js.map

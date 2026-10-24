@@ -123,6 +123,7 @@ model Order {
   addressId   String?
   address     Address?    @relation(fields: [addressId], references: [id], onDelete: SetNull)
   items       OrderItem[]
+  payments    Payment[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 }
@@ -139,4 +140,21 @@ model OrderItem {
   subtotal    Int
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Payment {
+  id              String   @id @default(uuid())
+  orderId         String
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  midtransOrderId String   @unique
+  status          String   @default("PENDING")
+  paymentType     String?
+  grossAmount     Int?
+  rawPayload      String?
+  snapToken       String?
+  snapRedirectUrl String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([orderId])
 }

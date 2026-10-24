@@ -31,6 +31,7 @@ const SAMPLE_IMAGES = [
 
 async function main() {
   console.log('Clearing existing data...');
+  await prisma.payment.deleteMany({});
   await prisma.orderItem.deleteMany({});
   await prisma.order.deleteMany({});
   await prisma.cartItem.deleteMany({});
@@ -197,3 +198,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

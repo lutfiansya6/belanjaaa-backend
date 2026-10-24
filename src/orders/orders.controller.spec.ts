@@ -39,6 +39,13 @@ describe('OrdersController', () => {
     findOne: vi.fn().mockResolvedValue(mockOrder),
     cancelOrder: vi.fn().mockResolvedValue({ ...mockOrder, status: OrderStatus.CANCELLED }),
     updateStatus: vi.fn().mockResolvedValue({ ...mockOrder, status: OrderStatus.PAID }),
+    pay: vi.fn().mockResolvedValue({
+      token: 'snap-token-123',
+      redirectUrl: 'https://app.sandbox.midtrans.com/snap/v2/vtweb/snap-token-123',
+      redirect_url: 'https://app.sandbox.midtrans.com/snap/v2/vtweb/snap-token-123',
+      snapToken: 'snap-token-123',
+      midtransOrderId: 'order-1',
+    }),
   };
 
   beforeEach(async () => {
@@ -111,4 +118,19 @@ describe('OrdersController', () => {
       });
     });
   });
+
+  describe('pay', () => {
+    it('should return snap token and redirect url for pending order', async () => {
+      const result = await controller.pay(mockUser, 'order-1');
+      expect(result).toEqual({
+        token: 'snap-token-123',
+        redirectUrl: 'https://app.sandbox.midtrans.com/snap/v2/vtweb/snap-token-123',
+        redirect_url: 'https://app.sandbox.midtrans.com/snap/v2/vtweb/snap-token-123',
+        snapToken: 'snap-token-123',
+        midtransOrderId: 'order-1',
+      });
+      expect(mockOrdersService.pay).toHaveBeenCalledWith('user-1', 'order-1');
+    });
+  });
 });
+

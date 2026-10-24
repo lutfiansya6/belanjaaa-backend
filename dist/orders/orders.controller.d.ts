@@ -208,4 +208,11 @@ export declare class OrdersController {
         status: import(".prisma/client").$Enums.OrderStatus;
         totalAmount: number;
     }>;
+    pay(user: JwtPayload, id: string): Promise<{
+        token: string;
+        redirectUrl: string;
+        redirect_url: string;
+        snapToken: string;
+        midtransOrderId: string;
+    }>;
 }

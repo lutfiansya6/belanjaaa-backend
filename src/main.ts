@@ -9,6 +9,16 @@ async function bootstrap() {
   // Global prefix: /api/v1
   app.setGlobalPrefix('api/v1');
 
+  // Support both direct paths (/payments/webhook, /orders/:id/pay) and prefixed paths (/api/v1/...)
+  app.use((req: any, _res: any, next: () => void) => {
+    if (req.url.startsWith('/payments/webhook')) {
+      req.url = '/api/v1' + req.url;
+    } else if (req.url.match(/^\/orders\/[^/]+\/pay/)) {
+      req.url = '/api/v1' + req.url;
+    }
+    next();
+  });
+
   // CORS configuration for Next.js frontend
   app.enableCors({
     origin: 'http://localhost:3000',
@@ -39,6 +49,7 @@ async function bootstrap() {
     .addTag('Cart', 'Pengelolaan keranjang belanja pengguna')
     .addTag('Orders', 'Pemesanan dan checkout produk')
     .addTag('Addresses', 'Alamat pengiriman pengguna')
+    .addTag('Payments', 'Integrasi pembayaran Midtrans Snap & Webhook')
     .addTag('Health', 'Pemeriksaan status sistem')
     .addBearerAuth()
     .build();
